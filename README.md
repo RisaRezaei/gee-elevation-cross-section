@@ -6,6 +6,10 @@
 
 Draw a line anywhere on Earth and get its **terrain profile**: elevation sampled every *n* metres along the line, charted against distance and exported as CSV. It's handy for river valleys, dam sites, road alignments, or checking slopes before hydrological modelling.
 
+![Elevation profile along the example polyline with a hillshade map](docs/preview.png)
+
+<sub>Example output: the default example line on an SRTM hillshade and its 109 km terrain profile.</sub>
+
 ## Features
 
 - **True distance spacing**: samples are placed every `spacingMeters` along the geodesic line, not by coordinate steps.
