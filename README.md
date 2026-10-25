@@ -1,69 +1,56 @@
-# Extracting Elevation Along a Cross Section Using Google Earth Engine
+# Elevation Cross-Section
 
-## Overview
-This script extracts elevation values along a defined cross-section using Google Earth Engine (GEE). A line segment is drawn, and sample points are placed along it at equal intervals. The script then retrieves elevation values at each of these locations using the CGIAR SRTM 90m Digital Elevation Model (DEM). The results are displayed in a chart for visualization.
+[![Google Earth Engine](https://img.shields.io/badge/Google%20Earth%20Engine-JavaScript-34A853?logo=googleearth&logoColor=white)](https://code.earthengine.google.com)
+[![DEM](https://img.shields.io/badge/DEM-SRTM%20%7C%20Copernicus%20GLO--30-6D4C41)](https://developers.google.com/earth-engine/datasets/catalog/USGS_SRTMGL1_003)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
-## Code Explanation
-### **Step 1: Define Cross-Section and Sampling Parameters**
-A line segment (CrossSection1) is used as the cross-section for analysis. A user-defined variable (numbPoints) specifies the spacing between sample points.
-```javascript
-var CrossSection1 = geometry; // Define a straight line segment
-var numbPoints = 5000; // Distance between sample points in lat/lon
-```
-### **Step 2: Generate Equally Spaced Points Along the Line**
-Extract the starting (point1) and ending (point2) coordinates of the line:
-```javascript
-var point1 = ee.List(CrossSection1.coordinates().get(0));
-var point2 = ee.List(CrossSection1.coordinates().get(1));
-```
-Generate a sequence of equally spaced coordinates along the line:
-```javascript
-var XmapList = ee.List.sequence(point1.get(0), point2.get(0), null, numbPoints);
-var YmapList = ee.List.sequence(point1.get(1), point2.get(1), null, numbPoints);
-```
-### **Step 3: Construct a Feature Collection of Sample Points**
-Using the generated coordinate lists, construct a set of equally spaced points along the line:
-```javascript
-var points = ee.FeatureCollection(XmapList.map(function(Xcoord){
-  var Ycoord = YmapList.get(XmapList.indexOf(Xcoord));
-  return ee.Feature(ee.Geometry.Point([Xcoord, Ycoord]));
-}));
-```
-Each Feature in the collection represents a sample location along the cross-section.
-### **Step 4: Extract Elevation Data from the DEM**
-Load the CGIAR SRTM 90m DEM image:
-```javascript
-var DEMIMAGE = ee.Image("CGIAR/SRTM90_V4");
-```
-Retrieve elevation values at each sampled location using reduceRegions():
-```javascript
-var elevation = DEMIMAGE.reduceRegions(points, ee.Reducer.first(), 10);
-```
-reduceRegions() extracts elevation values at multiple points.
-The first reducer ensures that only the first intersecting elevation value is selected per point.
-A scale of 10 meters is used to refine the resolution of sampling.
+Draw a line anywhere on Earth and get its **terrain profile**: elevation sampled every *n* metres along the line, charted against distance and exported as CSV. It's handy for river valleys, dam sites, road alignments, or checking slopes before hydrological modelling.
 
-### **Step 5: Visualize Elevation Profile**
+## Features
 
-The extracted elevation values are plotted using the ui.Chart.feature.byFeature() function:
-```javascript
-print(ui.Chart.feature.byFeature(elevation));
-```
-This generates a chart displaying the elevation variation along the cross-section.
+- **True distance spacing**: samples are placed every `spacingMeters` along the geodesic line, not by coordinate steps.
+- **Polylines supported**: works for two-point lines and multi-vertex paths.
+- **Choice of DEM**: SRTM 30 m, SRTM 90 m or Copernicus GLO-30.
+- **Outputs**: an elevation-vs-distance chart, a hillshade map with the line, and a CSV with distance, coordinates and elevation.
 
-## Key Features
+## Quick start
 
-✔ Efficient Sampling: Generates points at fixed intervals along a straight-line cross-section.
+1. Open the [Earth Engine Code Editor](https://code.earthengine.google.com).
+2. Paste [`elevation_cross_section.js`](elevation_cross_section.js) into a new script.
+3. Draw a line with the geometry tool (keep the default name `geometry`), or edit `CONFIG.line`.
+4. Press **Run**. The profile appears in the Console; start the CSV export from **Tasks**.
 
-✔ High-Resolution Elevation Data: Uses 90m SRTM DEM to obtain elevation values.
+## Configuration
 
-✔ Automated Charting: Displays elevation profile directly in the GEE interface.
+| Parameter | Default | Description |
+|---|---|---|
+| `line` | example polyline | Used when no drawn `geometry` exists |
+| `spacingMeters` | `250` | Distance between samples |
+| `dem` | `'SRTM30'` | `'SRTM30'`, `'SRTM90'` or `'COP30'` |
+| `exportCsv` | `true` | Create the CSV export task |
 
-## Potential Applications
+## Output
 
-📍 Topographic Analysis: Study elevation changes along rivers, roads, or mountain slopes.
+`elevation_profile.csv`
 
-📍 Hydrological Studies: Evaluate terrain profiles for flood modeling and watershed delineation.
+| distance_km | lon | lat | elevation_m |
+|---|---|---|---|
+| 0.00 | 46.0000 | 37.9500 | … |
+| 0.25 | … | … | … |
 
-📍 Infrastructure Planning: Assess slope variations for transportation and civil engineering projects
+## Notes
+
+- Choose a spacing close to the DEM resolution (30 m or 90 m); finer spacing only repeats the same cell values.
+- SRTM covers 60° N to 56° S. Use `COP30` for higher latitudes.
+
+## Data
+
+- NASA SRTM Digital Elevation 30 m: [`USGS/SRTMGL1_003`](https://developers.google.com/earth-engine/datasets/catalog/USGS_SRTMGL1_003)
+- CGIAR-CSI SRTM 90 m v4: [`CGIAR/SRTM90_V4`](https://developers.google.com/earth-engine/datasets/catalog/CGIAR_SRTM90_V4)
+- Copernicus DEM GLO-30: [`COPERNICUS/DEM/GLO30`](https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_DEM_GLO30)
+
+## Author
+
+**Parisa Abbasalizadehrezaei** · [risarezaei.github.io](https://risarezaei.github.io)
+
+Released under the [MIT License](LICENSE).
